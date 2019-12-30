@@ -1,0 +1,26 @@
+version: "3.4"
+services:
+  mqtt:
+    image: eclipse-mosquitto:latest
+    container_name: mqtt
+    restart: always
+    expose:
+      - 1883
+    ports:
+      - "1883:1883"
+    volumes:
+      - /opt/conf/mqtt/data:/mosquitto/data
+      - /opt/conf/mqtt/log:/mosquitto/log
+
+  sensor_monitor:
+    privileged: true
+    container_name: sensor_monitor
+    restart: always
+    command: yarn start
+    build: ./sensor_monitor
+    ports:
+      - "3000:3000"
+    # volumes:
+    #   - app-volume:/usr/app/appdata
+    links:
+      - mqtt
