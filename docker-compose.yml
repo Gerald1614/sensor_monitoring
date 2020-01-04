@@ -4,6 +4,8 @@ services:
     image: eclipse-mosquitto:latest
     container_name: mqtt
     restart: always
+    networks:
+      - monitoring
     expose:
       - 1883
     ports:
@@ -12,15 +14,65 @@ services:
       - /opt/conf/mqtt/data:/mosquitto/data
       - /opt/conf/mqtt/log:/mosquitto/log
 
+
+  
+  influxdb:
+    image: influxdb
+    container_name: influxdb
+    restart: always
+    env_file:
+      - 'env.influxdb'
+    ports:
+      - 8086:8086
+      - 8083:8083
+    networks:
+      - monitoring
+    volumes:
+      - influxdb-volume:/var/lib/influxdb
+
   sensor_monitor:
     privileged: true
     container_name: sensor_monitor
     restart: always
     command: yarn start
-    build: ./sensor_monitor
+    build: ./
+    networks:
+      - monitoring
     ports:
-      - "3000:3000"
-    # volumes:
-    #   - app-volume:/usr/app/appdata
+      - "3001:3001"
     links:
       - mqtt
+      - influxdb
+
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    networks:
+      - monitoring
+    links:
+      - influxdb
+    volumes:
+      - ./src/telegraf:/etc/telegraf
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    restart: always
+    # env_file:
+    #   - 'env.grafana'
+    ports:
+      - 3000:3000
+    networks:
+      - monitoring
+    volumes:
+      - grafana-volume:/var/lib/grafana
+    links:
+      - influxdb
+
+networks:
+  monitoring:
+volumes:
+  grafana-volume:
+    external: true
+  influxdb-volume:
+    external: true

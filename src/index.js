@@ -17,22 +17,22 @@ const bme280 = new BME280(options);
 const readSensorData = () => {
   bme280.readSensorData()
     .then((data) => {
-      client.publish('sensor_monitor', data);
-      setTimeout(readSensorData, 2000);
+      console.log(JSON.stringify(data, null, 2))
+      client.publish('sensor_monitor', JSON.stringify(data, null, 2));
+      setTimeout(readSensorData, 300000);
     })
     .catch((err) => {
-      client.publish('logs', `BME280 read error: ${err}`)
-      setTimeout(readSensorData, 2000);
+      client.publish('sensor_logs', `BME280 read error: ${err}`)
+      setTimeout(readSensorData, 300000);
     });
 };
 
 // Initialize the BME280 sensor
 //
-export const sensor = () => {
-  return bme280.init()
+bme280.init()
   .then(() => {
-    client.publish('logs', 'BME280 initialization succeeded');
+    console.log('BME280 initialization succeeded')
+    client.publish('sensor_logs', 'BME280 initialization succeeded');
     return readSensorData();
   })
-  .catch((err) => client.publish('logs', `BME280 initialization failed: ${err} `))
-}
+  .catch((err) => client.publish('sensor_logs', `BME280 initialization failed: ${err} `))
