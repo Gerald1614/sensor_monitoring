@@ -1,5 +1,6 @@
 import { connect } from 'mqtt'
 import BME280 from './bme280.js'
+import { transformedData } from './sensorDataTransform'
 
 const client = connect('mqtt://mqtt');
 client.on('connect', () => {})
@@ -17,8 +18,9 @@ const bme280 = new BME280(options);
 const readSensorData = () => {
   bme280.readSensorData()
     .then((data) => {
-      console.log(JSON.stringify(data, null, 2))
-      client.publish('sensor_monitor', JSON.stringify(data, null, 2));
+      const curatedData = transformedData(data)
+      console.log(JSON.stringify(curatedData, null, 2))
+      client.publish('sensor_monitor', JSON.stringify(curatedData, null, 2));
       setTimeout(readSensorData, 300000);
     })
     .catch((err) => {
